@@ -5,13 +5,16 @@ import java.awt.image.BufferedImage;
 import java.net.*;
 import java.io.*;
 import java.io.File;
+import java.util.ArrayList;
 
 public class HttpServer {
     private String root = "src/main/resources";
     private PrintWriter out = null;
+    private DBConnection connection = null;
 
     public void start() throws IOException {
         int port = getPort();
+        connection = new DBConnection();
         while(true) {
             ServerSocket serverSocket = null;
             try {
@@ -44,15 +47,20 @@ public class HttpServer {
             //System.out.println("Recibí: " + inputLine);
             if (inputLine.contains("GET")) {
                 file = inputLine.split(" ")[1];
-                if (file.equals("/")) {
-                    file = "/index.html";
+                if (file.startsWith("/Apps")) {
+                    String appuri = file.substring(5);
+                    out.println(invoke(appuri));
+                } else {
+                    if (file.equals("/")) {
+                        file = "/index.html";
+                    }
+                    getResource(file,clientSocket);
                 }
             }
             if (!in.ready()) {
                 break;
             }
         }
-        getResource(file,clientSocket);
         in.close();
     }
 
@@ -67,14 +75,19 @@ public class HttpServer {
             out.println(outputLine);
         }else if(type == 2) {
             getImage(file, clientSocket.getOutputStream());
-        }else{
-            outputLine = invoke(file);
-            out.println(outputLine);
         }
     }
 
     public String invoke(String type){
-        String outputLine = getHeader("html"),file =  HttpHandler.get(type);
+        String outputLine = getHeader("html"),file =  MySpark.get(type);
+        if(type.equals("/informationDB")){
+            file = "";
+            ArrayList<String[]> information = connection.getInformation();
+            for(String[] temp : information){
+                file+=" User Name:"+temp[0] +" - "+ " Address: " + temp[1];
+            }
+            return outputLine + file;
+        }
         if(file != null){
             return outputLine + file;
         }
@@ -135,10 +148,8 @@ public class HttpServer {
             return 0;
         }else if(type.contains("js")){
             return 1;
-        }else if(type.contains("png")){
-            return 2;
         }else{
-            return 3;
+            return 2;
         }
     }
 

@@ -3,7 +3,7 @@ package edu.escuelaing.arep.app;
 import java.util.HashMap;
 import java.util.Map;
 
-public class HttpHandler {
+public class MySpark {
     private static Map<String, String> endpoints = new HashMap<>();
 
     public static String get(String key){
@@ -13,7 +13,7 @@ public class HttpHandler {
         return null;
     }
 
-    public static void set(String key, String value){
+    public static void post(String key, String value){
         endpoints.put(key,value);
     }
 }
